@@ -27,7 +27,7 @@ namespace Pokemon.Controller
         [ProducesResponseType(200, Type = typeof(IEnumerable<Owner>))]
         public IActionResult GetOwners()
         {
-            var owners = _mapper.Map<OwnerDto>(_ownerRepository.GetOwners());
+            var owners = _mapper.Map<List<OwnerDto>>(_ownerRepository.GetOwners());
 
             if (!ModelState.IsValid) 
                 return BadRequest(ModelState);
@@ -69,9 +69,12 @@ namespace Pokemon.Controller
         {
             if (!_ownerRepository.OwnerExist(ownerId))
                 return NotFound();
-            var pokemons = _mapper.Map<PokemonDto>(_ownerRepository.GetPokemonByOwner(ownerId));
+            var pokemons = _mapper.Map<List<PokemonDto>>(
+                _ownerRepository.GetPokemonByOwner(ownerId));
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
             return Ok(pokemons);
         }
     }

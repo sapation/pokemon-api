@@ -11,6 +11,10 @@ namespace Pokemon.Helper
             CreateMap<PokemonTable, PokemonDto>();
             CreateMap<Category, CategoryDto>();
             CreateMap<Country, CountryDto>();
+            CreateMap<Review, ReviewDto>();
+            CreateMap<Reviewer, ReviewerDto>();
+
+            CreateMap<PokemonDto, PokemonTable>();
         }
     }
 }

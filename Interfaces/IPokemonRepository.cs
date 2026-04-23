@@ -9,6 +9,8 @@ namespace Pokemon.Interfaces
         PokemonTable GetPokemon(string name);
         decimal GetPokemonRating(int pokemonId);
         bool PokemonExist(int pokemonId);
+        bool CreatePokemon(int ownerId, int categoryId, PokemonTable pokemon);
+        bool Save();
 
     }
 }

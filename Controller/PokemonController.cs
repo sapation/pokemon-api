@@ -92,5 +92,53 @@ namespace Pokemon.Controller
 
             return Ok("Successfully created");
         }
+
+        [HttpPut("{pokeId}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public IActionResult UpdatePokemon(int pokeId, 
+            [FromQuery] int ownerId, 
+            [FromQuery] int catId, 
+            [FromBody] PokemonDto pokemonUpdate)
+        {
+            if (pokemonUpdate == null || pokeId == 0)
+                return BadRequest(ModelState);
+
+            if (pokeId != pokemonUpdate.Id)
+                return BadRequest(ModelState);
+
+            if (!_pokemonRepository.PokemonExist(pokeId))
+                return NotFound();
+
+            var pokemonMap = _mapper.Map<PokemonTable>(pokemonUpdate);
+            if (!_pokemonRepository.UpdatePokemon(ownerId, catId, pokemonMap))
+            {
+                ModelState.AddModelError("", "Something went wrong while updating");
+                return StatusCode(500, ModelState);
+            }
+            return Ok("Successfully updated pokemon");
+        }
+
+        [HttpDelete("{pokeId}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public IActionResult DeletePokemon(int pokeId)
+        {
+            if (!_pokemonRepository.PokemonExist(pokeId))
+                return NotFound();
+
+            var pokemonToDelete = _pokemonRepository.GetPokemon(pokeId);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_pokemonRepository.DeletePokemon(pokemonToDelete))
+            {
+                ModelState.AddModelError("", "Something went wrong while deleting");
+                return StatusCode(500, ModelState);
+            }
+            return Ok("Successfully deleted pokemon");
+        }
     }
 }

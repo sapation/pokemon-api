@@ -34,6 +34,12 @@ namespace Pokemon.Repository
             return Save();
         }
 
+        public bool DeletePokemon(PokemonTable pokemon)
+        {
+            _context.Remove(pokemon);
+            return Save();
+        }
+
         public PokemonTable GetPokemon(int id)
         {
             return _context.Pokemons.Where(p => p.Id == id).FirstOrDefault();
@@ -68,6 +74,24 @@ namespace Pokemon.Repository
         {
             var saved = _context.SaveChanges();
             return saved > 0 ? true : false;
+        }
+
+        public bool UpdatePokemon(int ownerId, int categoryId, PokemonTable pokemon)
+        {
+            var pokemonOwner = _context.PokemonOwners.Where(po => po.PokemonId == pokemon.Id).FirstOrDefault();
+            if (pokemonOwner != null)
+            {
+                pokemonOwner.OwnerId = ownerId;
+            }
+
+            var pokemonCategory = _context.PokemonCategories.Where(pc => pc.PokemonId == pokemon.Id).FirstOrDefault();
+            if (pokemonCategory != null)
+            {
+                pokemonCategory.CategoryId = categoryId;
+            }
+
+            _context.Update(pokemon);
+            return Save();
         }
     }
 }

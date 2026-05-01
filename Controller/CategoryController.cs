@@ -1,5 +1,6 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Pokemon.Dto;
 using Pokemon.Interfaces;
 using Pokemon.Models;
@@ -87,6 +88,53 @@ namespace Pokemon.Controller
             }
 
             return Ok("Successfully created category");
+        }
+
+        [HttpPut("{categoryId}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public IActionResult UpdateCategory(int categoryId, [FromBody] CategoryDto updatedCategory)
+        {
+            if (updatedCategory == null || categoryId == 0)
+                return BadRequest(ModelState);
+
+            if (categoryId != updatedCategory.Id)
+                return BadRequest(ModelState);
+
+            if (!_categoryRepository.CategoryExist(categoryId))
+                return NotFound();
+
+            var category = _mapper.Map<Category>(updatedCategory);
+
+            if (!_categoryRepository.UpdateCategory(category))
+            { 
+                ModelState.AddModelError("", "Something went wrong while updating");
+                return StatusCode(500, ModelState);
+            }
+
+            return Ok("Successfully updated category");
+        }
+
+        [HttpDelete("{categoryId}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public IActionResult DeleteCategory(int categoryId)
+        {
+            if (!_categoryRepository.CategoryExist(categoryId))
+                return NotFound();
+
+            var categoryToDelete = _categoryRepository.GetCategory(categoryId);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            
+            if (!_categoryRepository.DeleteCategory(categoryToDelete))
+            {
+                ModelState.AddModelError("", "Something went wrong while deleting");
+                return StatusCode(500, ModelState);
+            }
+            return Ok("Successfully deleted category");
         }
     }
 }

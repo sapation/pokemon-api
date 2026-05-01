@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Pokemon.Dto;
@@ -16,10 +12,14 @@ namespace Pokemon.Controller
     {
         private readonly IMapper _mapper;
         private readonly ICountryRepository _countryRepository;
-        public CountryController(ICountryRepository repository, IMapper mapper)
+        private readonly IOwnerRepository _ownerRepository;
+        public CountryController(ICountryRepository repository, 
+            IMapper mapper,
+            IOwnerRepository ownerRepository)
         {
             _mapper = mapper;
             _countryRepository = repository;
+            _ownerRepository = ownerRepository;
         }
 
         [HttpGet]
@@ -79,6 +79,38 @@ namespace Pokemon.Controller
                 return BadRequest(ModelState);
 
             return Ok(owners);
+        }
+
+        [HttpPost]
+        [ProducesResponseType(204, Type = typeof(Country))]
+        [ProducesResponseType(400)]
+        public IActionResult CreateCountry([FromQuery] int ownerId, [FromBody] CountryDto countryCreate)
+        {   if (countryCreate == null || ownerId == 0)
+                return BadRequest(ModelState);
+
+            var countries = _countryRepository.GetCountries()
+                .Where(c => c.Name.Trim().ToUpper() == countryCreate.Name.TrimEnd().ToUpper())
+                .FirstOrDefault();
+
+            if (countries != null)
+            {
+                ModelState.AddModelError("", "Country already exists");
+                return StatusCode(422, ModelState);
+            }
+
+            var countryMap = _mapper.Map<Country>(countryCreate);
+            countryMap.Owner = new List<Owner>
+            {
+                _ownerRepository.GetOwner(ownerId)
+            };
+
+            if (!_countryRepository.CreateCountry(countryMap))
+            {
+                ModelState.AddModelError("", "Something went wrong while saving");
+                return StatusCode(500, ModelState);
+            }
+
+            return Ok("Successfully created");
         }
     }
 }

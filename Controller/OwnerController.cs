@@ -17,10 +17,17 @@ namespace Pokemon.Controller
     {
         private readonly IOwnerRepository _ownerRepository;
         private readonly IMapper _mapper;
-        public OwnerController(IOwnerRepository ownerRepository, IMapper mapper)
+        private readonly ICountryRepository _countryRepository;
+        private readonly IPokemonRepository _pokemonRepository;
+        public OwnerController(IOwnerRepository ownerRepository, 
+            IMapper mapper,
+             ICountryRepository countryRepository,
+             IPokemonRepository pokemonRepository)
         {
             _mapper = mapper;
             _ownerRepository = ownerRepository;
+            _countryRepository = countryRepository;
+            _pokemonRepository = pokemonRepository;
         }
 
         [HttpGet]
@@ -76,6 +83,33 @@ namespace Pokemon.Controller
                 return BadRequest(ModelState);
 
             return Ok(pokemons);
+        }
+
+        [HttpPost]
+        [ProducesResponseType(200, Type = typeof(Owner))]
+        [ProducesResponseType(400)]
+        public IActionResult CreateOwner([FromQuery] int pokeId, [FromQuery] int countryId, [FromBody] OwnerDto ownerCreate)
+        {           
+            if (ownerCreate == null)
+                return BadRequest(ModelState);
+            var owners = _ownerRepository.GetOwners()
+                .Where(o => o.LastName.Trim().ToUpper() == ownerCreate.LastName.TrimEnd().ToUpper())
+                .FirstOrDefault();
+
+            if (owners != null)
+            {
+                ModelState.AddModelError("", "Owner already exist");
+                return StatusCode(422, ModelState);
+            }
+            var ownerMap = _mapper.Map<Owner>(ownerCreate);
+            ownerMap.Country = _countryRepository.GetCountry(countryId);
+
+            if (!_ownerRepository.CreateOwner(pokeId, ownerMap))
+            {
+                ModelState.AddModelError("", "Something went wrong while saving");
+                return StatusCode(500, ModelState);
+            }
+            return Ok("Successfully created.");
         }
     }
 }

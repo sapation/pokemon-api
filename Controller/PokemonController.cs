@@ -12,10 +12,14 @@ namespace Pokemon.Controller
     public class PokemonController : ControllerBase
     {
         private readonly IPokemonRepository _pokemonRepository;
+        private readonly IReviewRepository _reviewRepository;
         private readonly IMapper _mapper;
-        public PokemonController(IPokemonRepository pokemonRepository, IMapper mapper)
+        public PokemonController(IPokemonRepository pokemonRepository, 
+            IMapper mapper,
+            IReviewRepository reviewRepository)
         {
             _pokemonRepository = pokemonRepository;
+            _reviewRepository = reviewRepository;
             _mapper = mapper;
         }
 
@@ -130,8 +134,16 @@ namespace Pokemon.Controller
                 return NotFound();
 
             var pokemonToDelete = _pokemonRepository.GetPokemon(pokeId);
+            var reviewsToDelete = _reviewRepository.GetReviewsOfAPokemon(pokeId);
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+            
+            if(!_reviewRepository.DeleteReviews(reviewsToDelete.ToList()))
+            {
+                ModelState.AddModelError("", "Something went wrong while deleting reviews");
+                return StatusCode(500, ModelState);
+            }
 
             if (!_pokemonRepository.DeletePokemon(pokemonToDelete))
             {
